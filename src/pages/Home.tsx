@@ -9,6 +9,8 @@ export default function Home() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState("");
   const [partidoAbiertoId, setPartidoAbiertoId] = useState<number | null>(null);
   const [loadingPartidos, setLoadingPartidos] = useState(true);
+  const TIME_ZONE = "America/Guayaquil";
+
 
   useEffect(() => {
     async function cargarPartidos() {
@@ -34,14 +36,40 @@ export default function Home() {
       .toLowerCase();
   }
 
+
+  function parseFechaUTC(fecha: string) {
+    const normalizada = fecha.replace(" ", "T");
+
+    if (
+      normalizada.endsWith("Z") ||
+      normalizada.includes("+") ||
+      normalizada.match(/-\d{2}:\d{2}$/)
+    ) {
+      return new Date(normalizada);
+    }
+
+    return new Date(`${normalizada}Z`);
+  }
+
   function obtenerFecha(fecha: string) {
-    return fecha.slice(0, 10);
+    const date = parseFechaUTC(fecha);
+
+    const partes = new Intl.DateTimeFormat("en-CA", {
+      timeZone: TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date);
+
+    const year = partes.find((p) => p.type === "year")?.value;
+    const month = partes.find((p) => p.type === "month")?.value;
+    const day = partes.find((p) => p.type === "day")?.value;
+
+    return `${year}-${month}-${day}`;
   }
 
   function formatearFecha(fecha: string) {
-    const fechaFormateable = fecha.includes("T") ? fecha : `${fecha}T00:00:00`;
-
-    return new Date(fechaFormateable).toLocaleDateString("es-EC", {
+    return new Date(`${fecha}T00:00:00`).toLocaleDateString("es-EC", {
       weekday: "long",
       day: "2-digit",
       month: "long",
@@ -50,13 +78,17 @@ export default function Home() {
   }
 
   function formatearHora(fecha: string) {
-    const fechaFormateable = fecha.includes("T")
-      ? fecha
-      : fecha.replace(" ", "T");
-
-    return new Date(fechaFormateable).toLocaleTimeString("es-EC", {
+    return parseFechaUTC(fecha).toLocaleTimeString("es-EC", {
+      timeZone: TIME_ZONE,
       hour: "2-digit",
       minute: "2-digit",
+    });
+  }
+
+  function formatearFechaCorta(fecha: string) {
+    return new Date(`${fecha}T00:00:00`).toLocaleDateString("es-EC", {
+      day: "2-digit",
+      month: "short",
     });
   }
 
@@ -104,15 +136,6 @@ export default function Home() {
         .filter(Boolean)
     )
   ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
-  function formatearFechaCorta(fecha: string) {
-    const fechaFormateable = fecha.includes("T") ? fecha : `${fecha}T00:00:00`;
-
-    return new Date(fechaFormateable).toLocaleDateString("es-EC", {
-      day: "2-digit",
-      month: "short",
-    });
-  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">

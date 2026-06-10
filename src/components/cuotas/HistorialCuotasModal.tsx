@@ -1,4 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useEffect, useState } from "react";
 import type { HistorialCuota } from "../../types/cuota";
 
 type Props = {
@@ -20,12 +21,12 @@ const coloresCasa: Record<string, string> = {
 };
 
 const formatearFecha = (fecha: string) => {
-  return new Date(fecha).toLocaleString("es-EC", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+    return new Date(fecha).toLocaleString("es-EC", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 };
 
 export default function HistorialCuotasModal({
@@ -43,6 +44,14 @@ export default function HistorialCuotasModal({
     const fechas = Array.from(
         new Set(historial.map((item) => item.fecha_captura))
     );
+
+    const [casasSeleccionadas, setCasasSeleccionadas] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (casas.length > 0) {
+            setCasasSeleccionadas([casas[0]]);
+        }
+    }, [abierto, historial]);
 
     const data = fechas.map((fecha) => {
         const row: Record<string, string | number> = {
@@ -88,28 +97,46 @@ export default function HistorialCuotasModal({
                         No hay historial disponible para esta selección.
                     </p>
                 ) : (
-                    <div className="h-[420px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data}>
-                                <XAxis dataKey="fecha" />
-                                <YAxis domain={["auto", "auto"]} />
-                                <Tooltip />
-                                <Legend />
+                    <>
+                        <div className="mb-4 flex flex-wrap gap-2">
+                            {casas.map((casa) => (
+                                <button
+                                    key={casa}
+                                    onClick={() => setCasasSeleccionadas([casa])}
+                                    className={`rounded-full px-3 py-1 text-sm font-semibold ${casasSeleccionadas.includes(casa)
+                                        ? "bg-emerald-500 text-slate-950"
+                                        : "bg-slate-800 text-slate-300"
+                                        }`}
+                                >
+                                    {casa}
+                                </button>
+                            ))}
+                        </div>
 
-                                {casas.map((casa) => (
-                                    <Line
-                                        key={casa}
-                                        type="monotone"
-                                        dataKey={casa}
-                                        stroke={coloresCasa[casa] ?? "#ffffff"}
-                                        strokeWidth={3}
-                                        dot={{ r: 4 }}
-                                        connectNulls
-                                    />
-                                ))}
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
+                        <div className="h-[420px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data}>
+                                    <XAxis dataKey="fecha" minTickGap={70} />
+                                    <YAxis domain={["auto", "auto"]} />
+                                    <Tooltip />
+                                    <Legend />
+
+                                    {casasSeleccionadas.map((casa) => (
+                                        <Line
+                                            key={casa}
+                                            type="stepAfter"
+                                            dataKey={casa}
+                                            stroke={coloresCasa[casa] ?? "#ffffff"}
+                                            strokeWidth={3}
+                                            dot={false}
+                                            activeDot={{ r: 5 }}
+                                            connectNulls
+                                        />
+                                    ))}
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </>
                 )}
             </div>
         </div>
