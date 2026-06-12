@@ -92,6 +92,8 @@ export default function Home() {
     });
   }
 
+  const ahora = new Date();
+
   const partidosFiltrados = partidos.filter((partido) => {
     const texto = normalizarTexto(
       `${partido.equipo_local} ${partido.equipo_visitante}`
@@ -100,11 +102,14 @@ export default function Home() {
     const coincideBusqueda = texto.includes(normalizarTexto(busqueda));
 
     const fechaPartido = obtenerFecha(partido.fecha_partido);
+    const fechaHoraPartido = parseFechaUTC(partido.fecha_partido);
 
     const coincideFecha =
       fechaSeleccionada === "" || fechaPartido === fechaSeleccionada;
 
-    return coincideBusqueda && coincideFecha;
+    const aunNoInicia = fechaHoraPartido.getTime() > ahora.getTime();
+
+    return coincideBusqueda && coincideFecha && aunNoInicia;
   });
 
   const partidosOrdenados = [...partidosFiltrados].sort((a, b) => {
@@ -132,6 +137,10 @@ export default function Home() {
   const fechasDisponibles = Array.from(
     new Set(
       partidos
+        .filter((partido) => {
+          const fechaHoraPartido = parseFechaUTC(partido.fecha_partido);
+          return fechaHoraPartido.getTime() > ahora.getTime();
+        })
         .map((partido) => obtenerFecha(partido.fecha_partido))
         .filter(Boolean)
     )
